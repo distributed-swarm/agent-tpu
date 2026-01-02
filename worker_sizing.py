@@ -29,6 +29,18 @@ def _env_float(name: str, default: float) -> float:
         return default
 
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    v = os.getenv(name)
+    if v is None:
+        return default
+    s = str(v).strip().lower()
+    if s in ("1", "true", "yes", "y", "on"):
+        return True
+    if s in ("0", "false", "no", "n", "off"):
+        return False
+    return default
+
+
 def _detect_cpu() -> Dict[str, Any]:
     """
     CPU sizing for a dynamic pipeline model.
@@ -129,64 +141,3 @@ def _parse_nvidia_smi() -> List[Dict[str, Any]]:
         cmd = ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"]
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
     except Exception:
-        return []
-
-    devices: List[Dict[str, Any]] = []
-    for idx, line in enumerate(out.splitlines()):
-        line = line.strip()
-        if not line:
-            continue
-        parts = [p.strip() for p in line.split(",")]
-        if len(parts) != 2:
-            continue
-        name, mem_str = parts
-        try:
-            mem_mib = float(mem_str)
-        except ValueError:
-            continue
-        total_bytes = int(mem_mib * 1024 * 1024)
-        devices.append({"index": idx, "name": name, "total_memory_bytes": total_bytes})
-    return devices
-
-
-def _detect_gpu() -> Dict[str, Any]:
-    if not _nvidia_visible_devices_allows_gpu():
-        return {"gpu_present": False, "gpu_count": 0, "vram_gb": None, "devices": [], "max_gpu_workers": 0}
-
-    devices = _parse_nvidia_smi()
-    if not devices:
-        return {"gpu_present": False, "gpu_count": 0, "vram_gb": None, "devices": [], "max_gpu_workers": 0}
-
-    gpu_count = len(devices)
-    max_bytes = max(int(d.get("total_memory_bytes", 0) or 0) for d in devices)
-    vram_gb = (max_bytes / float(1024 ** 3)) if max_bytes > 0 else None
-
-    # keep your current heuristic; GPU autoscaling belongs in app.py
-    max_gpu_workers = gpu_count
-
-    return {
-        "gpu_present": True,
-        "gpu_count": int(gpu_count),
-        "vram_gb": (round(vram_gb, 2) if vram_gb is not None else None),
-        "devices": devices,
-        "max_gpu_workers": int(max_gpu_workers),
-    }
-
-
-def build_worker_profile() -> Dict[str, Any]:
-    cpu_info = _detect_cpu()
-    gpu_info = _detect_gpu()
-
-    # total is a label; autoscaler should ignore this and drive reality.
-    cpu_soft = int(cpu_info.get("cpu_soft_cap_workers", cpu_info.get("max_cpu_workers", 1)) or 1)
-    gpu_max = int(gpu_info.get("max_gpu_workers", 0) or 0)
-    max_total_workers = max(1, cpu_soft + gpu_max)
-
-    return {
-        "cpu": cpu_info,
-        "gpu": gpu_info,
-        "workers": {
-            "max_total_workers": int(max_total_workers),
-            "current_workers": 0,
-        },
-    }
