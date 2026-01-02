@@ -1,7 +1,10 @@
 requests==2.32.3
 psutil==6.1.0
 
-# SciPy pin for py3.9 safety
+# Keep numpy < 2 because pycoral's compiled extension is built against NumPy 1.x
+numpy<2
+
+# SciPy is fine, but keep it bounded for Python 3.9 stability
 scipy<1.14
 
 ftfy<7
