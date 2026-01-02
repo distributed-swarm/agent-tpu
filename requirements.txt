@@ -1,8 +1,11 @@
 requests==2.32.3
 psutil==6.1.0
 
-# SciPy: pin <1.14 because 1.14+ is Py3.10+; 1.13.x supports Py3.9+
+# SciPy pin for py3.9 safety
 scipy<1.14
 
-# ftfy supports Python 3.x; keep it bounded to avoid surprise breaking changes
 ftfy<7
+
+# Edge TPU Python runtime
+tflite-runtime
+pycoral
