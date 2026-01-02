@@ -1,2 +1,2 @@
-# agent-tpu
-Agent for TPU excelerator
+# agent
+node runner; executes jobs and reports metrics
