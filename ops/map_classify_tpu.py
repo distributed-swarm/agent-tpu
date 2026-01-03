@@ -40,6 +40,8 @@ def run(payload: Dict[str, Any], ctx: Dict[str, Any] = None) -> Dict[str, Any]:
       - payload["allow_fallback"] default True
     """
     ctx = ctx or {}
+    payload = payload or {}
+
     t0 = time.time()
     allow_fallback = payload.get("allow_fallback", True)
 
@@ -70,7 +72,7 @@ def run(payload: Dict[str, Any], ctx: Dict[str, Any] = None) -> Dict[str, Any]:
         h.interpreter.invoke()
 
         out = h.interpreter.get_tensor(out_details["index"]).flatten().astype("float32")
-        topk = _topk(out, payload.get("topk", 5))
+        topk = _topk(out, int(payload.get("topk", 5)))
 
         return {
             "op": OP_NAME,
