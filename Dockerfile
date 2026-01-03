@@ -7,8 +7,9 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    libedgetpu1-std \
     usbutils \
- && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/*
 
 # NOTE: Coral wheels (pycoral + tflite-runtime 2.5.0.post1) live on the Coral pip index, not PyPI.
 COPY requirements.txt .
