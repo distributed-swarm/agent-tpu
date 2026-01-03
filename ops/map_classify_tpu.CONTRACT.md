@@ -4,17 +4,17 @@
 Run INT8 TFLite classification on an Edge TPU.
 
 ## Inputs (payload)
-- `input`: list[int]  
+- `input`: list[int]
   Flattened INT8 tensor matching model input shape.
-- `model_path` (optional): string  
+- `model_path` (optional): string
   Absolute path to `*_edgetpu.tflite`.
-- `topk` (optional): int  
+- `topk` (optional): int
   Default: 5
 
 ## Outputs
 - `op`: string (`map_classify_tpu`)
 - `model_path`: string
-- `topk`: list of:
+- `topk`: list of objects:
   - `index`: int
   - `score`: float
 - `elapsed_ms`: float
