@@ -29,7 +29,7 @@ def _cpu_fallback(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @register_op(OP_NAME)
-def run(payload: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
+def run(payload: Dict[str, Any], ctx: Dict[str, Any] = None) -> Dict[str, Any]:
     """
     TPU-backed INT8 TFLite classification.
 
@@ -39,6 +39,7 @@ def run(payload: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
       - payload["input"] required (flat list[int] of int8 values)
       - payload["allow_fallback"] default True
     """
+    ctx = ctx or {}
     t0 = time.time()
     allow_fallback = payload.get("allow_fallback", True)
 
