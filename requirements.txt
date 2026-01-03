@@ -4,6 +4,10 @@ psutil==6.1.0
 # Keep numpy < 2 because pycoral's compiled extension is built against NumPy 1.x
 numpy<2
 
+# TPU runtime (pin to match pycoral wheels)
+tflite-runtime==2.5.0.post1
+pycoral==2.0.0
+
 # SciPy is fine, but keep it bounded for Python 3.9 stability
 scipy<1.14
 
