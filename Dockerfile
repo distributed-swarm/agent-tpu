@@ -12,7 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 RUN python -m pip install --upgrade pip && \
-    pip install --no-cache-dir --prefer-binary -r requirements.txt
+    pip install --no-cache-dir --prefer-binary \
+      --extra-index-url https://google-coral.github.io/py-repo/ \
+      -r requirements.txt
 
 COPY app.py worker_sizing.py ops_loader.py .
 COPY ops ./ops
