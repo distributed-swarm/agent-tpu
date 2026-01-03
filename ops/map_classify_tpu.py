@@ -6,6 +6,7 @@ import time
 
 import numpy as np
 
+from . import register_op
 from ._tpu_runtime import get_model_path, get_tpu_handle
 
 OP_NAME = "map_classify_tpu"
@@ -19,11 +20,6 @@ def _topk(scores: np.ndarray, k: int):
 
 
 def _cpu_fallback(payload: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Minimal, safe fallback:
-    - returns 'fallback' flag
-    - doesn't pretend it ran inference
-    """
     return {
         "op": OP_NAME,
         "fallback": "cpu",
@@ -32,6 +28,7 @@ def _cpu_fallback(payload: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+@register_op(OP_NAME)
 def run(payload: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
     """
     TPU-backed INT8 TFLite classification.
@@ -43,7 +40,6 @@ def run(payload: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
       - payload["allow_fallback"] default True
     """
     t0 = time.time()
-
     allow_fallback = payload.get("allow_fallback", True)
 
     try:
@@ -63,7 +59,9 @@ def run(payload: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
 
         expected = int(np.prod(shape))
         if arr.size != expected:
-            raise ValueError(f"Input size mismatch. Got {arr.size}, expected {expected} for shape {shape}.")
+            raise ValueError(
+                f"Input size mismatch. Got {arr.size}, expected {expected} for shape {shape}."
+            )
 
         arr = arr.reshape(shape)
 
