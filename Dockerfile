@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     usbutils \
  && rm -rf /var/lib/apt/lists/*
 
+# NOTE: Coral wheels (pycoral + tflite-runtime 2.5.0.post1) live on the Coral pip index, not PyPI.
 COPY requirements.txt .
 RUN python -m pip install --upgrade pip && \
     pip install --no-cache-dir --prefer-binary \
