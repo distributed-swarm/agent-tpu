@@ -196,12 +196,12 @@ def _lease_once() -> Optional[Tuple[str, Dict[str, Any]]]:
 
     return lease_id, task
 
-
-def _post_result(lease_id: str, job_id: str, status: str, result: Any = None, error: Any = None) -> None:
+def _post_result(lease_id: str, job_id: str, job_epoch: Optional[int], status: str, result: Any = None, error: Any = None) -> None:
     payload: Dict[str, Any] = {
         "lease_id": lease_id,
         "job_id": job_id,
-        "status": status,   # "succeeded" or "failed"
+        "job_epoch": job_epoch,
+        "status": status,
         "result": result,
         "error": error,
     }
@@ -211,21 +211,20 @@ def _post_result(lease_id: str, job_id: str, status: str, result: Any = None, er
     if code >= 400:
         raise RuntimeError(f"result HTTP {code}: {body}")
 
+ def _extract_task(task: Dict[str, Any]) -> Tuple[str, str, Dict[str, Any], Optional[int]]:
+     job_id = task.get("id") or task.get("job_id")
+     op = task.get("op")
+     payload = task.get("payload") or {}
+     job_epoch = task.get("job_epoch")
 
-def _extract_task(task: Dict[str, Any]) -> Tuple[str, str, Dict[str, Any]]:
-    job_id = task.get("id") or task.get("job_id")
-    op = task.get("op")
-    payload = task.get("payload") or {}
+     if not isinstance(job_id, str) or not job_id:
+         raise RuntimeError(f"task missing job id: {task!r}")
+     if not isinstance(op, str) or not op:
+         raise RuntimeError(f"task missing op: {task!r}")
+     if not isinstance(payload, dict):
+         raise RuntimeError(f"task payload not dict: {task!r}")
 
-    if not isinstance(job_id, str) or not job_id:
-        raise RuntimeError(f"task missing job id: {task!r}")
-    if not isinstance(op, str) or not op:
-        raise RuntimeError(f"task missing op: {task!r}")
-    if not isinstance(payload, dict):
-        raise RuntimeError(f"task payload not dict: {task!r}")
-
-    return job_id, op, payload
-
+     return job_id, op, payload, job_epoch
 
 # ---------------- runtime ----------------
 
@@ -289,13 +288,14 @@ def main() -> int:
         duration_ms = (time.time() - start_ts) * 1000.0
 
         try:
-            _post_result(
-                lease_id,
-                job_id,
-                "succeeded" if ok else "failed",
-                result=(out if ok else None),
-                error=(None if ok else err),
-            )
+         _post_result(
+             lease_id,
+             job_id,
+             job_epoch,
+             "succeeded" if ok else "failed",
+             result=(out if ok else None),
+             error=(None if ok else err),
+         )
         except Exception as e:
             _log_err_ratelimited("result", f"[agent-tpu-v1] post result error: {e}")
 
